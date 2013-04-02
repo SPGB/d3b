@@ -31,6 +31,11 @@ public class Main {
 	 * with these skills: 1,gloom 2,guardian turret 3,smoke screen 4,ferret
 	 * ferret helps a lot with gold find
 	 */
+	  static int mouse_click_offset_x = 0; //for users with width != 1920
+	  static int mouse_click_offset_y = 0; //for users with height != 1080
+	  static double run_speed = 1; //adjust depending on your characters speed
+	  static int awareness_degree = 4; //how closely to look for enemies and items
+	  
 	  static int main_text_int = Integer.parseInt( "FFFFFF",16); //main text color for overlay
 	  static int main_background_int = Integer.parseInt( "FFFFFF",16); //background is by default transparent
 	  static Color main_text = Color.white;
@@ -48,17 +53,12 @@ public class Main {
 	  static String log_file = "C:\\d3b_log.txt"; //use whatever file location you want here, feeding it into the dropbox folder lets you check on your bot across devices
 	  static Resourc re;
 	  static int combat_looting_counter = 0; //only loot in combat 1/2 the time
-	  
 	  static boolean enemy_bar = false;	
 	  static boolean enemy_detection = false;
 	  static boolean enable_sound = true;
 	  static boolean window_hidden = true;
-	  static int mouse_click_offset_x = 0; //for users with width != 1920
-	  static int mouse_click_offset_y = 0; //for users with height != 1080
 	  static boolean start_to_close = false;
 	  static long start_close_time;
-	  
-	  
 	  static int[] compare_color_quest_0 = new int[]{60,10,0};
 	  static int[] compare_color_quest_1 = new int[]{15,2,0};
 	  static int[] compare_color_frame = new int[]{139,131,121};
@@ -70,7 +70,8 @@ public class Main {
 	  static int[] compare_color_set = new int[]{1,205,1};
 	  static int[] compare_color_gem = new int[]{153,187,255};
 	  static int[] compare_color_monster = new int[]{240,1,1};
-	  static int in_game_steps = 0;
+	  static double in_game_steps = 0;
+	  
 	  static int runs = 0;
 	  static int deaths = 0;
 	  static int streak = 0;
@@ -191,10 +192,9 @@ public class Main {
 			start_time = System.currentTimeMillis();	
 			add_text("run: " + runs + " (" + success_rate + "% success)");
 			add_text("streak: " + streak + ", deaths: " + deaths);
-			key("4"); //summon ferret
+			key("4"); //FINE TUNE THIS DEPENDING (currently used to summon ferrets)
 		}
 		if (in_game_steps == 15) mouse_click(550,370); //go to waypoint
-		//if (in_game_steps == 30) mouse_click(980,510); //scroll on waypoint
 		if (in_game_steps == 35) {
 			Color j = rob.getPixelColor(30,30); //TODO: switch from fixed position
 			if (pixel_compare(j.getRed(), j.getGreen(), j.getBlue(), compare_color_waypoint)) {
@@ -254,14 +254,13 @@ public class Main {
 				}
 			}
 		}
-		in_game_steps++;
+		in_game_steps += run_speed;
 		check_dead();
 	}
 	public static void awareness_check() { //scan across looking for the orange glow, if found follow it to the base and click
 		if (last_awareness_check > System.currentTimeMillis()) return; //only once every 500ms
 		last_awareness_check = System.currentTimeMillis() + time_between_awareness_checks; // + 500ms
 		int awareness_baseline_x = (screenSize.width / 2) - 350, awareness_baseline_y = (screenSize.height / 2) - 350;
-		int awareness_degree = 4;
 		img_spatial_awareness_check = rob.createScreenCapture(new Rectangle(awareness_baseline_x,awareness_baseline_y,700,700)); //grab the screen
 		int approach_rgb = 0;
 		int approach_b, approach_g, approach_r;
@@ -442,22 +441,22 @@ public class Main {
 	public static void smokescreen_if_hurt() {
 		if (last_ss > System.currentTimeMillis()) return;
 		if (!has_health(30)) {
-			last_ss = System.currentTimeMillis() + 8000;
-			key("3");
-			key("2");
+			last_ss = System.currentTimeMillis() + 8000; //FINE TUNE THIS DEPENDING (currently used to track guardian turret cooldown)
+			key("3");//FINE TUNE THIS DEPENDING (currently used to lingering fog)
+			key("2"); //FINE TUNE THIS DEPENDING (currently used to summon guardian turret)
 		}
 	}
 	public static void attack_if_hurt(int x, int y) {
 		if (!has_health(90)) {
-			key("1");
+			key("1"); //FINE TUNE THIS DEPENDING (currently used to summon gloom)
 			attack(x, y);
-			last_gloom = System.currentTimeMillis() + 4500;
+			last_gloom = System.currentTimeMillis() + 4500; //FINE TUNE THIS DEPENDING (currently used to track my last gloom cast / cooldown)
 			in_game_steps--;
 		}
 	}
 	public static void check_dead() {
-		Color j = rob.getPixelColor(543,333); //TODO: switch from fixed position
-		Color j2 = rob.getPixelColor(1268,330); //TODO: switch from fixed position
+		Color j = rob.getPixelColor(543+mouse_click_offset_x,333+mouse_click_offset_y); //TODO: switch from fixed position
+		Color j2 = rob.getPixelColor(1268+mouse_click_offset_x,330+mouse_click_offset_y); //TODO: switch from fixed position
 		if (pixel_compare(j.getRed(), j.getGreen(), j.getBlue(), compare_color_dead) && pixel_compare(j2.getRed(), j2.getGreen(), j2.getBlue(), compare_color_dead)) {
 			deaths++;
 			streak = 0;
